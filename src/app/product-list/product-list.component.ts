@@ -1,20 +1,41 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { IProduct } from './product';
-
+import { ProductListService } from '../shared/services/product-list.service';
+import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-product-list',
   templateUrl: './product-list.component.html',
   styleUrls: ['./product-list.component.css'],
 })
-export class ProductListComponent implements OnInit {
-  constructor() {
-    console.log('I am Constructor');
+export class ProductListComponent implements OnInit, OnDestroy {
+  private _productService;
+
+  constructor(
+    private productService: ProductListService,
+    private router: Router
+  ) {
+    this._productService = productService;
+  }
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
+
+  ngOnInit(): void {
+    this.sub = this.productService.getProductsList().subscribe({
+      next: (products) => {
+        this.products = products;
+        this.filteredProducts = this.products;
+      },
+      error: (err) => (this.errorMessage = err),
+    });
   }
 
   pageTitle: string = 'Product List';
   showImage: boolean = false;
-
+  sub!: Subscription;
   private _listFilter: string = '';
+  errorMessage: string = '';
 
   filteredProducts: IProduct[] = [];
 
@@ -35,28 +56,7 @@ export class ProductListComponent implements OnInit {
     );
   }
 
-  products: IProduct[] = [
-    {
-      productId: 2,
-      productName: 'Garden Cart',
-      productCode: 'GDN-0023',
-      releaseDate: 'March 18, 2021',
-      description: '15 gallon capacity rolling garden cart',
-      price: 32.99,
-      starRating: 4.2,
-      imageUrl: 'assets/images/garden_cart.png',
-    },
-    {
-      productId: 5,
-      productName: 'Hammer',
-      productCode: 'TBX-0048',
-      releaseDate: 'May 21, 2021',
-      description: 'Curved claw steel hammer',
-      price: 8.9,
-      starRating: 4.8,
-      imageUrl: 'assets/images/hammer.png',
-    },
-  ];
+  products: IProduct[] = [];
 
   products1: any[] = [
     {
@@ -68,7 +68,11 @@ export class ProductListComponent implements OnInit {
       surname: 'Patel',
     },
     {
-      name: 'Priyanshu',
+      name: 'Priyanshu1',
+      surname: 'Patel',
+    },
+    {
+      name: 'Priyanshu2',
       surname: 'Patel',
     },
   ];
@@ -77,7 +81,11 @@ export class ProductListComponent implements OnInit {
     this.showImage = !this.showImage;
   }
 
-  ngOnInit(): void {
-    this._listFilter = 'cart';
+  onRatingClicked(message: string): void {
+    this.pageTitle = 'Product List' + message;
+  }
+
+  onProductClicked(productId: number): void {
+    this.router.navigate(['/products', productId]);
   }
 }
